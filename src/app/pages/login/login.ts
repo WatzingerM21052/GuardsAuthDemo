@@ -1,5 +1,7 @@
-import { Component, signal } from '@angular/core';
+import { Component, effect, inject, input, signal } from '@angular/core';
 import { form, FormField, required, email, pattern } from '@angular/forms/signals';
+import { AuthService } from '../../services/auth-service';
+import { Router } from '@angular/router';
 
 interface LoginData {
   email: string;
@@ -13,6 +15,10 @@ interface LoginData {
   styleUrl: './login.scss',
 })
 export class Login {
+
+  private authService = inject(AuthService);
+  private router = inject(Router);
+
   loginModel = signal<LoginData>({
     email: '',
     password: '',
@@ -29,11 +35,20 @@ export class Login {
     );
   });
 
+  _ = effect(() => {
+    if (this.authService.isAuthenticated()) {
+      this.router.navigateByUrl(this.returnUrl());
+    }
+  })
+
+  returnUrl = input(``);
+
   onSubmit(event: Event) {
     event.preventDefault();
     // Perform login logic here
     const credentials = this.loginModel();
     console.log('Logging in with:', credentials);
     // e.g., await this.authService.login(credentials);
+    this.authService.login(credentials.email, credentials.password);
   }
 }
